@@ -1,0 +1,47 @@
+## L0 Gate 规则
+
+### 立即 DROP
+社交寒暄、元对话、重复信息（已有记忆覆盖）、模糊片段、纯执行过程、一次性上下文、常规代码变更
+
+### 放行 PASS
+用户纠正、明确决策（有理由）、偏好表达（有理由）、新发现、工作流变更、反复出现的问题、架构决策
+
+### 信号密度评分（各 1-5 分）
+- 可操作性：能否改变未来操作方式
+- 持久性：是否跨会话有效
+- 独特性：是否全新信息
+- 影响范围：影响一个文件 vs 整个工作流
+
+总分 >= 8：写入 L1（verification: WORKED）
+总分 4-7：写入 L1（verification: UNTESTED）
+总分 < 4：DROP
+
+## 去重
+- 先读取 .ray/memory/l2-patterns/ 和 l3-judgments/，已被高层覆盖则 DROP
+- 检查 .ray/memory/l1-episodes/ 中是否有高度相似条目，有则更新而非新建
+- 检查 L1 中是否有 source: "grow" 的相似条目，有则更新而非新建
+
+## L1 Episode 写入格式
+文件路径: .ray/memory/l1-episodes/ep-{YYYYMMDD}-{序号}.md
+
+```markdown
+---
+id: "ep-{YYYYMMDD}-{序号}"
+timestamp: "{ISO8601}"
+situation: "{触发这次记忆的上下文}"
+action: "{采取的行动}"
+outcome: "{结果或影响}"
+context_tags: [{标签列表，如 architecture, decision, debugging, preference, workflow}]
+verification: "UNTESTED"
+strength: 1.0
+access_count: 0
+last_accessed: "{ISO8601}"
+---
+
+{1-3 句自然语言描述，解释 why 和 how to apply}
+```
+
+## 原则
+- 宁可漏记，不可错记
+- 只记结论，不记过程
+- 不确定就不写入
