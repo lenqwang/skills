@@ -1,0 +1,31 @@
+{
+  "name": "skills",
+  "description": "Agent-driven development pipeline and UI generation skills for Claude Code",
+  "owner": {
+    "name": "lenqwang",
+    "email": ""
+  },
+  "plugins": [
+    {
+      "name": "ray",
+      "description": "Agent-driven development pipeline with living documentation system — propose, trace, pipeline, architect, qa, coder, audit, ship",
+      "category": "development",
+      "source": "./ray",
+      "homepage": "https://github.com/lenqwang/skills/tree/main/ray"
+    },
+    {
+      "name": "ray-beta",
+      "description": "Agent-driven development pipeline with memory distillation system (L1/L2/L3) — includes mem-recall, mem-gate, mem-distill, grow",
+      "category": "development",
+      "source": "./ray-beta",
+      "homepage": "https://github.com/lenqwang/skills/tree/main/ray-beta"
+    },
+    {
+      "name": "ui-craft-plugin",
+      "description": "UI generation with layered constraint system and HTML-to-Next.js conversion engine",
+      "category": "development",
+      "source": "./ui-craft-plugin",
+      "homepage": "https://github.com/lenqwang/skills/tree/main/ui-craft-plugin"
+    }
+  ]
+}
