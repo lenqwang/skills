@@ -53,23 +53,30 @@ trace   (Dev) ─┘                       │                       │        
 ### Claude Code
 
 ```bash
-# 通过 AIMarkt 市场安装
-claude plugin marketplace add https://aimarkt.fulltrust.link/marketplace.git
-claude plugin install ray-beta@aimarkt-marketplace
+# 1. 添加 marketplace（在终端中执行）
+claude plugin marketplace add https://github.com/lenqwang/skills.git
+
+# 2. 安装（全局，所有项目可用）
+claude plugin install ray-beta
+
+# 或仅为当前项目安装
+claude plugin install ray-beta --scope project
 ```
+
+安装后重启 Claude Code 会话生效。
 
 ### Cursor
 
 ```bash
-git clone -b beta https://oauth2:glpat-uvUwb4O4ex5yHz0lSSfbe286MQp1OmxpCA.01.0y0o7k437@git.fulltrust.link/fe/ai-plugin-ray.git ~/.cursor/ray-beta
-mkdir -p .cursor/skills && cp -r ~/.cursor/ray-beta/skills .cursor/skills/ray-beta
+git clone https://github.com/lenqwang/skills.git ~/.cursor/skills-ray-beta
+mkdir -p .cursor/skills && cp -r ~/.cursor/skills-ray-beta/ray-beta/skills .cursor/skills/ray-beta
 ```
 
 ### Codex
 
 ```bash
-git clone -b beta https://oauth2:glpat-uvUwb4O4ex5yHz0lSSfbe286MQp1OmxpCA.01.0y0o7k437@git.fulltrust.link/fe/ai-plugin-ray.git ~/.codex/ray-beta
-mkdir -p ~/.agents/skills && ln -s ~/.codex/ray-beta/skills ~/.agents/skills/ray-beta
+git clone https://github.com/lenqwang/skills.git ~/.codex/skills-ray-beta
+mkdir -p ~/.agents/skills && ln -s ~/.codex/skills-ray-beta/ray-beta/skills ~/.agents/skills/ray-beta
 ```
 
 ## Skills
@@ -297,5 +304,9 @@ Stop / SessionEnd
 ## 更新
 
 ```bash
+# Claude Code
 claude plugin update ray-beta
+
+# Codex
+cd ~/.codex/skills-ray-beta && git pull
 ```

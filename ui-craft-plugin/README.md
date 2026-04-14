@@ -13,11 +13,18 @@
 
 ### Claude Code
 
-安装：
+```bash
+# 1. 添加 marketplace（在终端中执行）
+claude plugin marketplace add https://github.com/lenqwang/skills.git
 
+# 2. 安装（全局，所有项目可用）
+claude plugin install ui-craft-plugin
+
+# 或仅为当前项目安装
+claude plugin install ui-craft-plugin --scope project
 ```
-/plugin install ui-craft-plugin@aimarkt-marketplace
-```
+
+安装后重启 Claude Code 会话生效。
 
 | Skill | 触发方式 | 说明 |
 |-------|----------|------|
@@ -26,18 +33,13 @@
 
 ### Cursor
 
-安装（复制以下提示词，粘贴到 Cursor 的 AI 对话框）：
+```bash
+# 1. 克隆仓库
+git clone https://github.com/lenqwang/skills.git ~/.cursor/skills-ui-craft
 
-用户级（所有项目可用）：
-```
-请从以下地址获取安装提示词，并严格按照其中的步骤操作：
-https://aimarkt.fulltrust.link/api/plugins/ui-craft-plugin/install-prompt?scope=user
-```
-
-项目级（仅当前项目）：
-```
-请从以下地址获取安装提示词，并严格按照其中的步骤操作：
-https://aimarkt.fulltrust.link/api/plugins/ui-craft-plugin/install-prompt?scope=project
+# 2. 复制 skills 到项目
+mkdir -p .cursor/skills
+cp -r ~/.cursor/skills-ui-craft/ui-craft-plugin/skills/* .cursor/skills/
 ```
 
 | Skill | 触发方式 | 说明 |

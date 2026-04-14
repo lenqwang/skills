@@ -22,7 +22,7 @@ trace   (Dev) ─┘                        │                      │        
 
 ```bash
 # 1. 添加 marketplace（在终端中执行）
-claude plugin marketplace add https://oauth2:glpat-uvUwb4O4ex5yHz0lSSfbe286MQp1OmxpCA.01.0y0o7k437@git.fulltrust.link/fe/ai-plugin-ray.git
+claude plugin marketplace add https://github.com/lenqwang/skills.git
 
 # 2. 安装（全局，所有项目可用）
 claude plugin install ray
@@ -37,22 +37,22 @@ claude plugin install ray --scope project
 
 ```bash
 # 1. 克隆仓库
-git clone https://oauth2:glpat-uvUwb4O4ex5yHz0lSSfbe286MQp1OmxpCA.01.0y0o7k437@git.fulltrust.link/fe/ai-plugin-ray.git ~/.cursor/ray
+git clone https://github.com/lenqwang/skills.git ~/.cursor/skills-ray
 
 # 2. 复制 skills 到项目
 mkdir -p .cursor/skills
-cp -r ~/.cursor/ray/skills .cursor/skills/ray
+cp -r ~/.cursor/skills-ray/ray/skills .cursor/skills/ray
 ```
 
 ### Codex
 
 ```bash
 # 1. 克隆仓库
-git clone https://oauth2:glpat-uvUwb4O4ex5yHz0lSSfbe286MQp1OmxpCA.01.0y0o7k437@git.fulltrust.link/fe/ai-plugin-ray.git ~/.codex/ray
+git clone https://github.com/lenqwang/skills.git ~/.codex/skills-ray
 
 # 2. 创建 skills 符号链接
 mkdir -p ~/.agents/skills
-ln -s ~/.codex/ray/skills ~/.agents/skills/ray
+ln -s ~/.codex/skills-ray/ray/skills ~/.agents/skills/ray
 
 # 3. 重启 Codex
 ```
@@ -124,5 +124,5 @@ ln -s ~/.codex/ray/skills ~/.agents/skills/ray
 claude plugin update ray
 
 # Codex
-cd ~/.codex/ray && git pull
+cd ~/.codex/skills-ray && git pull
 ```
