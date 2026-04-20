@@ -1,18 +1,64 @@
 ---
 name: origin
-description: 为新项目引导活文档系统（Genesis），或定期对照代码库状态校准现有文档（Reconcile）。迁移操作请使用 /migrate
+description: 为新项目引导活文档系统（Genesis），或定期对照代码库状态校准现有文档（Reconcile）。支持多项目文档仓初始化（--docs）和代码仓连接（--connect）。迁移操作请使用 /migrate
 ---
 
 # Origin — 创世与校准 Agent
 
-你是编排器。职责：扫描代码库，然后派发两个并行 sub-agent 分别生成技术文档和产品文档。
+你是编排器。职责：扫描代码库，然后派发两个并行 sub-agent 分别生成技术文档和产品文档。也负责多项目文档仓的初始化和代码仓连接。
 
 ## 模式
 
-- **创世** (`/origin`)：首次扫描。无文档存在。从零生成一切（含初始化 CSV 索引）。
+- **创世** (`/origin`)：首次扫描。无文档存在。从零生成一切（含初始化 CSV 索引）。**默认 hub 模式**（创建 `.ray/` 配置 + 独立文档仓），可降级为 legacy 单仓模式。
 - **校准** (`/origin --reconcile`)：三层文档已存在。对比文档状态与实际代码。修复偏移。
+- **文档仓初始化** (`/origin --docs`)：在空 git 仓中创建文档仓目录结构。一次性操作。
+- **连接代码仓** (`/origin --connect {docs_url}`)：将代码仓连接到已有文档仓。生成 `.ray/config.yaml`，clone 文档仓到 `.ray/docs/`。
 
 > **迁移相关操作**已独立为 `/migrate` skill。包括产品文档迁移（`/migrate --docs`）和索引迁移（`/migrate --index`）。
+
+---
+
+## Phase 0：输出模式（创世模式专用）
+
+创世模式在扫描之前，先确定文档输出位置。
+
+```
+Phase 0 流程：
+
+1. 检测 .ray/config.yaml 是否存在
+   → 已存在：自动 hub 模式，docs_root = .ray/docs/，跳到 Phase 1
+
+2. 检测 docs/product/PRODUCT-MAP.md 是否存在
+   → 已存在：建议改用 --reconcile，退出
+
+3. 无配置 → 询问文档仓路径（默认 hub 模式）：
+
+   "文档存放位置（默认 hub 模式）：
+    - 输入本地路径（如 ../my-docs）或 git URL → hub 模式
+    - 输入 skip → 单仓 legacy 模式（docs/）"
+
+4a. 用户输入路径或 URL：
+    - 从 git remote 推导 repo_id（如 git@github.com:acme/acme-web.git → web）
+    - 询问产品名（如 acme）
+    - 创建 .ray/ 目录
+    - 生成 .ray/config.yaml：
+      product: {product}
+      repo_id: {repo_id}
+      docs_url: {用户输入的路径或 URL}
+    - 追加 .ray/docs/ 到 .gitignore
+    - 如输入是本地路径：
+      - 路径不存在 → mkdir -p + git init
+      - 路径存在但无 PRODUCT-MAP.md → 继续（将生成到该路径）
+      - 路径存在且有 PRODUCT-MAP.md → 建议 --reconcile
+    - 如输入是 git URL → git clone 到 .ray/docs/
+    - docs_root = .ray/docs/（或本地路径）
+
+4b. 用户输入 skip：
+    - docs_root = docs/（legacy 模式）
+    - 不创建 .ray/
+```
+
+Phase 0 完成后，`docs_root` 变量确定。后续所有 Phase 的输出路径均使用 `{docs_root}`。
 
 ---
 
@@ -84,7 +130,38 @@ description: 为新项目引导活文档系统（Genesis），或定期对照代
 
 ## Phase 3：并行生成 ⏸️ 确认点
 
-Phase 2 扫描结果收集完毕后，向用户展示骨架概览并等待确认。确认后，**同时**派发两个 sub-agent：
+Phase 2 扫描结果收集完毕后，向用户展示骨架概览并等待确认。
+
+### 3a. tech/ 档位询问
+
+确认骨架后，根据扫描结果推断项目规模并推荐 tech/ 档位：
+
+**规模推断规则**：
+- 检测到的独立运行时数量（每个独立构建产物算一个）
+- 检测到的跨端关注点数量（auth/observability/ci-cd/testing/security，仅在扫描中发现证据时计入）
+- 数据层组件（database/cache/queue）
+
+| 条件 | 推荐档位 |
+|------|---------|
+| 运行时 ≥ 2 或有微服务 | **完整**（runtime/ + concerns/） |
+| 运行时 = 1 但有 ≥ 2 个关注点 | **精简**（仅 TECH-MAP.md + concerns/） |
+| 运行时 = 1 且关注点 ≤ 1 | **跳过** |
+
+向用户展示推荐：
+
+```
+检测到 {N} 个运行时单元、{数据层描述}、{N} 个跨端关注点。
+建议 tech/ 档位：{推荐档位}
+
+是否生成 tech/ 技术架构文档？
+A. 完整（runtime/ + concerns/）{← 推荐，如果是推荐档位}
+B. 精简（仅 TECH-MAP.md + concerns/）
+C. 跳过
+```
+
+用户选择后，将 `tech_tier`（`full` / `minimal` / `skip`）传入技术 Sub-Agent。
+
+### 3b. 派发并行 Sub-Agent
 
 <CRITICAL>
 **必须并行调度**。技术 Sub-Agent 和产品 Sub-Agent 同时启动，它们之间没有依赖关系。
@@ -105,6 +182,7 @@ Phase 2 扫描结果收集完毕后，向用户展示骨架概览并等待确认
 - Phase 1 骨架：{skeleton}
 - Phase 2 各包扫描结果：{scan_results}
 - 现有 CLAUDE.md：{claude_md_content}
+- tech_tier：{full | minimal | skip}（用户在 Phase 3a 选择的 tech/ 档位）
 
 ## Step 1: 架构合并
 
@@ -144,18 +222,160 @@ Phase 2 扫描结果收集完毕后，向用户展示骨架概览并等待确认
 ### 文档路径
 | 用途 | 路径 |
 |------|-----|
-| 产品地图索引（决策层） | docs/product/PRODUCT-MAP.md |
-| 模块索引（叙事层） | docs/product/modules/{name}/index.md |
-| 组件文件（规约层） | docs/product/modules/{name}/{ComponentName}.md |
-| 追溯 | docs/traces/ |
-| 类型合约 | docs/specs/ |
+| 产品地图索引（决策层） | {docs_root}/product/PRODUCT-MAP.md |
+| 模块索引（叙事层） | {docs_root}/product/modules/{name}/index.md |
+| 组件文件（规约层） | {docs_root}/product/modules/{name}/{ComponentName}.md |
+| 技术架构全景 | {docs_root}/tech/TECH-MAP.md |
+| 追溯 | {docs_root}/traces/ |
+| 类型合约 | {docs_root}/specs/ |
+
+> `{docs_root}` 取决于模式：legacy 模式 = `docs`，docs 模式 = `.`（根级），repo 模式 = `.ray/docs`。
+> 如 tech_tier = skip，省略"技术架构全景"行。
 
 规则：只放 KV 对。不写逻辑描述。不写业务行为。
 
-## Step 3: 输出
+## Step 3: 生成 tech/ 目录（仅 tech_tier ≠ skip）
+
+如 tech_tier = `skip`，跳过此步骤。
+
+根据 tech_tier 和扫描结果，在 `{docs_root}/tech/` 下生成文档。
+
+### 3a. TECH-MAP.md（full 和 minimal 都生成）
+
+```markdown
+# {项目名} — 技术架构全景
+
+> {架构风格一句话，从扫描结果推断，如"Electron 桌面单体 + 嵌入式 Express 服务 + React Native 移动客户端"}
+
+## 技术栈总览
+
+| 端 | 语言 | 框架 | 运行时 |
+|----|------|------|--------|
+| {从扫描结果填充，每个检测到的运行时一行} |
+
+## 部署拓扑
+
+{ASCII 图，展示各运行时单元的部署关系和通信方式}
+
+## 运行时单元
+
+| 单元 | 类型 | 技术栈 | 文档 |
+|------|------|--------|------|
+| {名称} | {Agent 自行分类} | {框架 + 语言} | [runtime/{type}/overview.md](runtime/{type}/overview.md) |
+
+> 仅 tech_tier = full 时填充文档链接列。minimal 模式下此表无链接列。
+
+## 数据层
+
+| 组件 | 技术 | 用途 |
+|------|------|------|
+| {如 SQLite} | {driver 库} | {一句话} |
+
+> 仅列出扫描中检测到的数据层组件。
+
+## 外部依赖（关键）
+
+| 依赖 | 用途 | 版本 |
+|------|------|------|
+| {仅列核心外部依赖，如 AI SDK、IM SDK、支付 SDK} |
+
+---
+
+_最后更新：{日期}_
+```
+
+### 3b. runtime/ 目录（仅 tech_tier = full）
+
+按检测到的运行时分类创建子目录和 overview.md。**仅在有扫描证据时创建**。
+
+分类由 Agent 根据扫描结果自行决定。判断原则：**一个 overview.md 对应一个独立的构建产物和运行环境**。如果两个运行时共享构建工具链和进程模型（如同一个 Node.js 服务的多个模块），合并到一个文件；如果它们有独立的构建入口、不同的部署方式（如 Electron 桌面 vs React Native 移动端），拆分为独立文件。
+
+常见的分类方向供参考（不是硬性规定）：web、h5、native/desktop/mobile、services、database、cache、queue。
+
+每个 overview.md 使用以下模板：
+
+```markdown
+# {运行时名称}
+
+> {一句话描述}
+
+## 技术栈
+
+| 项 | 值 |
+|---|---|
+| 框架 | {检测到的} |
+| 语言 | {检测到的} |
+| 构建工具 | {检测到的} |
+| 入口点 | {检测到的} |
+
+## 架构模式
+
+{1-2 段描述架构模式，如"Electron 主进程通过 IPC Bridge 与渲染进程通信"}
+
+## 关键模块
+
+| 模块 | 职责 | 入口 |
+|------|------|------|
+
+## 已知约束
+
+- {性能约束、平台限制等}
+
+---
+
+_最后更新：{日期}_
+```
+
+services/ 下额外创建空的 `flows/` 目录（跨服务调用流程在迭代中逐步补充）。
+
+### 3c. concerns/ 目录（full 和 minimal 都生成）
+
+按检测到的关注点生成文档。**仅在有扫描证据时创建**。
+
+| 关注点 | 检测信号 | 生成路径 |
+|--------|---------|---------|
+| auth | 检测到 JWT/OAuth/bcrypt/session/认证中间件 | concerns/auth.md |
+| observability | 检测到 Sentry/winston/pino/日志库/监控 SDK | concerns/observability.md |
+| ci-cd | 检测到 .github/workflows/、Dockerfile、CI 配置 | concerns/ci-cd.md |
+| testing | 检测到测试框架（vitest/jest/pytest/playwright） | concerns/testing.md |
+| security | 检测到 CORS/CSRF/rate-limit/加密/安全中间件 | concerns/security.md |
+
+每个 concerns 文件使用以下模板：
+
+```markdown
+# {关注点名称}
+
+> {一句话描述当前项目中该关注点的实现方式}
+
+## 现状
+
+{2-3 段描述当前实现，涵盖各运行时单元中的处理方式}
+
+## 关键决策
+
+| 决策 | 理由 | 影响范围 |
+|------|------|---------|
+
+## 已知风险
+
+- {描述}
+
+---
+
+_最后更新：{日期}_
+```
+
+### 3d. decisions/ 目录
+
+创建空目录 `tech/decisions/`。**不生成任何 ADR 文件**——ADR 是项目迭代中产生的。
+
+ADR 命名约定：`{YYYY-MM-DD}-{slug}.md`（如 `2026-04-15-multi-tenant-isolation.md`）。在目录下创建一个 `README.md` 说明此约定。
+
+## Step 4: 输出
 
 将 Boot Sector 写入 CLAUDE.md。
-输出架构摘要：包结构、关键依赖、域分类、检测到的技术债数量。
+如 tech_tier ≠ skip，将 tech/ 目录文件写入 `{docs_root}/tech/`。
+输出架构摘要：包结构、关键依赖、域分类、检测到的技术债数量、tech/ 档位和文件数。
 ```
 
 ---
@@ -413,8 +633,15 @@ ASCII 布局
 ```
 ## Origin 完成报告
 
+### 配置
+- 输出模式：{hub | legacy}
+如 hub 模式：
+- .ray/config.yaml：已创建（product: {product}, repo_id: {repo_id}）
+- 文档仓：{docs_root}
+
 ### 技术侧
 - Boot Sector：已写入 CLAUDE.md（{N} 个域、{N} 个包）
+- tech/ 档位：{full | minimal | skip}
 - 技术债检测：{N} 项
 
 ### 产品侧
@@ -423,18 +650,28 @@ ASCII 布局
 - 用户旅程：{N} 条
 
 ### 文件清单
+如 hub 模式：
+- [created] .ray/config.yaml
+- [updated] .gitignore（追加 .ray/docs/）
 - [created] CLAUDE.md（Boot Sector 节）
-- [created] docs/product/PRODUCT-MAP.md
-- [created] docs/product/modules/{name}/index.md × {N}
-- [created] docs/product/modules/{name}/{Component}.md × {N}
+- [created] {docs_root}/product/PRODUCT-MAP.md
+- [created] {docs_root}/product/modules/{name}/index.md × {N}
+- [created] {docs_root}/product/modules/{name}/{Component}.md × {N}
 - 关系边：{N} 条（均双向一致）
+如 tech_tier ≠ skip：
+- [created] {docs_root}/tech/TECH-MAP.md
+如 tech_tier = full：
+- [created] {docs_root}/tech/runtime/{type}/overview.md × {N}
+- [created] {docs_root}/tech/runtime/{database|cache|queue}.md × {N}
+如 tech_tier = full 或 minimal：
+- [created] {docs_root}/tech/concerns/{topic}.md × {N}
 
 ### CSV 索引
-- [created] docs/traces/index.csv
-- [created] docs/traces/files.csv
-- [created] docs/traces/tests.csv
-- [created] docs/traces/apis.csv
-- [created] docs/traces/tech_debt.csv
+- [created] {docs_root}/traces/index.csv
+- [created] {docs_root}/traces/files.csv
+- [created] {docs_root}/traces/tests.csv
+- [created] {docs_root}/traces/apis.csv
+- [created] {docs_root}/traces/tech_debt.csv
 ```
 
 ### Phase 4a：初始化 CSV 索引
@@ -502,3 +739,188 @@ ASCII 布局
 10. **写意图不写代码** — 描述业务意图（"启动【建立连接】交互"），不描述代码实现（"调用 handleConnect"）。代码会改名，意图不变。
 11. **双向原子更新** — 修改 A→B 关系时，必须在同一个 task 中更新 A 和 B 两个文件的关系表。禁止孤立链接。
 12. **爬行深度限制** — 影响分析默认只爬两层链接（直接上游 + 直接下游），防止上下文爆炸。
+
+---
+
+## 文档仓初始化模式（`/origin --docs`）
+
+<HARD-GATE>
+仅在空 git 仓中执行。检测到非空仓 → 报错退出。
+</HARD-GATE>
+
+### 流程
+
+```
+/origin --docs
+  1. 检测当前目录是否为空 git 仓（除 .git 和 README.md 外无其他文件）
+     → 非空：报错 "当前仓库非空，/origin --docs 仅在空仓中执行"
+  2. 提问产品名：
+     "请输入产品标识（如 acme）："
+  3. 询问是否需要技术架构文档：
+     "是否需要 tech/ 目录（技术架构、服务拓扑、ADR）？(y/n)"
+  4. 创建目录结构：
+     product/
+       PRODUCT-MAP.md          ← 骨架（含产品定位占位符 + 空模块索引表）
+       modules/                ← 空目录
+     contracts/
+       shared/schemas/         ← 空目录
+     traces/
+       .gitignore              ← 内容：*.csv
+       _archive/               ← 空目录
+     如选择了 tech/：
+       tech/
+         TECH-MAP.md           ← 骨架（含架构风格占位符）
+         runtime/
+         concerns/
+         decisions/
+  5. git add + commit（消息："[ray] origin --docs: initialize {product} docs repo"）
+  6. 推送到 remote（如配置了）
+  7. 输出：
+     "文档仓已创建。在各代码仓中运行以下命令连接：
+      /origin --connect {当前仓 remote url}
+
+      如果还没有 remote，请先在 GitHub/GitLab 创建仓库并推送。"
+```
+
+### PRODUCT-MAP.md 骨架
+
+```markdown
+# {product} — 产品地图
+
+> {产品定位一句话 — 请补充}
+
+---
+
+## 模块索引
+
+| 模块 | 职责 | 核心组件 | 文档 |
+|------|------|---------|------|
+
+---
+
+_最后更新：{日期}_
+```
+
+### TECH-MAP.md 骨架（如选择创建）
+
+```markdown
+# {product} — 技术架构全景
+
+> 架构风格：{请补充，如 BS / 微服务 / 全栈}
+
+## 服务拓扑
+
+{请补充}
+
+## 技术栈总览
+
+| 端 | 语言 | 框架 | 运行时 |
+|----|------|------|--------|
+
+---
+
+_最后更新：{日期}_
+```
+
+---
+
+## 连接代码仓模式（`/origin --connect {docs_url}`）
+
+<HARD-GATE>
+仅在代码仓中执行（非文档仓）。检测到已有 `.ray/config.yaml` → 提示已连接，是否重新配置。
+</HARD-GATE>
+
+### 流程
+
+```
+/origin --connect git@github.com:acme/acme-docs.git
+  1. 检测是否已有 .ray/config.yaml
+     → 已有：展示当前配置，询问 "已连接到 {docs_url}，是否重新配置？(y/n)"
+     → n：退出
+  2. clone 文档仓到临时目录，读取 PRODUCT-MAP.md 提取 product 名
+     → clone 失败：报错 "无法访问 {docs_url}，请检查地址和权限"
+     → PRODUCT-MAP.md 不存在：报错 "目标仓库不是有效的 ray 文档仓（缺少 PRODUCT-MAP.md），请先运行 /origin --docs"
+  3. 从 git remote 推导 repo_id：
+     git remote get-url origin → 提取仓库名 → 去掉 org 前缀
+     如 git@github.com:acme/acme-web.git → web
+  4. 展示推导结果，确认：
+     "检测到：
+      product: {product}
+      repo_id: {repo_id}
+      docs_url: {docs_url}
+      确认？(y/n，或输入修正值)"
+  5. 创建 .ray/ 目录（如不存在）
+  6. 生成 .ray/config.yaml：
+     ```yaml
+     product: {product}
+     repo_id: {repo_id}
+     docs_url: {docs_url}
+     ```
+  7. 追加 .ray/docs/ 到 .gitignore（如不存在该行）
+  8. 将临时 clone 移动到 .ray/docs/（或删除临时 clone 重新 clone 到 .ray/docs/）
+  9. 扫描代码中的 API 路由定义（Express routes / Next.js API routes / Spring annotations 等）
+     → 如发现已有 API，生成 contracts/{module}/paths/{resource}.yaml 骨架
+     → 展示骨架列表，询问 "是否写入文档仓的 contracts/ 目录？(y/n)"
+     → y：写入并 commit + push 到文档仓
+     → 如未发现或用户跳过，不生成
+  10. 输出：
+      "连接成功！
+       配置：.ray/config.yaml
+       文档仓：.ray/docs/
+
+       请提交配置：
+         git add .ray/config.yaml .gitignore
+         git commit -m 'chore: connect to ray docs repo'
+
+       之后团队其他人 clone 本仓即可直接使用 ray。"
+```
+
+---
+
+## resolve_docs_root() — 文档根路径解析
+
+所有 skill 在入口处调用此逻辑获取文档根路径和运行模式。
+
+```
+resolve_docs_root():
+    # 优先级 1：当前目录就是文档仓
+    # 三重检测避免误判：product/PRODUCT-MAP.md + traces/ + 无 .ray/config.yaml
+    if exists("./product/PRODUCT-MAP.md") and exists("./traces/") and not exists("./.ray/config.yaml"):
+        return cwd, mode = "docs"
+
+    # 优先级 2：当前在一个带 .ray/config.yaml 的代码仓
+    if exists("./.ray/config.yaml"):
+        cfg = read_config("./.ray/config.yaml")
+        docs_path = "./.ray/docs"
+
+        if not exists(docs_path):
+            git clone cfg.docs_url docs_path
+            ensure_gitignore_entry(".ray/docs/")
+
+        return docs_path, mode = "repo"
+
+    # 优先级 3：单仓模式（向后兼容）
+    if exists("./docs/product/PRODUCT-MAP.md"):
+        return "./docs", mode = "legacy"
+
+    error("未检测到 ray 文档仓或 ray 配置。请运行 /origin 初始化。")
+```
+
+### 同步时机
+
+每次 ray 命令入口，在 `resolve_docs_root()` 返回 `mode = "repo"` 后：
+
+```
+sync_docs():
+    git -C .ray/docs fetch origin
+    git -C .ray/docs pull --rebase
+    if pull 失败:
+        # 核武器恢复：删除并重新 clone
+        rm -rf .ray/docs
+        git clone cfg.docs_url .ray/docs
+    # 重建 CSV 缓存
+    python3 {ray_plugin_path}/scripts/search.py --rebuild-csv --project-dir {docs_path}
+```
+
+- **docs 模式**下不自动 sync——用户在文档仓自己管 git
+- **legacy 模式**下不 sync——单仓无需同步

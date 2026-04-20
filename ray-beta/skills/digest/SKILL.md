@@ -41,6 +41,18 @@ description: 定期将碎片化的 trace（以 {TYPE}-{4hex}-{slug}.md 命名，
 - 更新后的 `PRODUCT-MAP.md`（如有新模块或组件数变更）
 - 归纳报告（对话内输出，不落盘）
 
+### 模式检查
+
+调用 `resolve_docs_root()` 获取 `(docs_root, mode)`。
+
+**docs 模式下**：允许（首选）。docs 模式是 /digest 的天然工作区
+**repo 模式下**：正常执行。
+**legacy 模式下**：正常执行。
+
+<HARD-GATE>
+PRODUCT-MAP.md 必须存在。digest 只做归纳不从零创建。如不存在，报错建议运行 /origin。
+</HARD-GATE>
+
 ## 流程
 
 ### Phase 0: 范围确定 ⏸️ 唯一确认点
@@ -277,6 +289,14 @@ description: 定期将碎片化的 trace（以 {TYPE}-{4hex}-{slug}.md 命名，
 - docs/product/sidebar-history-ux.md → chat/Sidebar.md
 - docs/product/open-page-card.md → cards/OpenPageCard.md
 ```
+
+### Phase 6: 归档 Trace
+
+归纳完成后，将已消化的 trace 归档，防止后续重复处理。
+
+1. **移动 trace 目录** — 将 `docs/traces/{TRACE_ID}/` 移动到 `docs/traces/_archive/{TRACE_ID}/`
+2. **更新 state JSON** — 将对应 state JSON 文件中的 `status` 设为 `digested`
+3. **重建 CSV 索引** — 调用 `rebuild_csv()` 更新 trace CSV 索引（归档后正确剪枝）
 
 ## 交互模型
 

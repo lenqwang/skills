@@ -16,6 +16,14 @@ spec 文件有两个产出：
 2. 项目源码中的类型文件 — 可被代码 import 的真正类型定义（存在项目的类型目录中）
 </HARD-GATE>
 
+### 模式检查
+
+调用 `resolve_docs_root()` 获取 `(docs_root, mode)`。
+
+**docs 模式下**：部分允许。仅在生成 contracts/ 文件时允许
+**repo 模式下**：正常执行。
+**legacy 模式下**：正常执行。
+
 ## 输入
 
 - 已确认的需求 Markdown（来自 `docs/traces/`）— 含组件模板级别（轻量/标准/完整）
@@ -58,6 +66,30 @@ spec 文件有两个产出：
 - Go 项目 → `.go`（struct + interface）
 
 这是**代码**，被测试和实现 import。
+
+### 产出 3：API 契约文件（contracts/ 目录）
+
+当需求涉及 API 端点时，在项目根目录的 `contracts/` 下写出 OpenAPI 契约文件：
+
+**目录结构**：
+```
+contracts/
+├── {module}/
+│   ├── openapi.yaml          # 模块入口，$ref 聚合下方 paths/
+│   ├── paths/
+│   │   └── {resource}.yaml   # 按 URL 资源路径前缀组织（同一前缀的操作放一个文件）
+│   └── schemas/
+│       └── {Model}.yaml      # 模块内部共享类型
+└── shared/
+    └── schemas/
+        └── {SharedModel}.yaml # 跨模块共享类型（如 Pagination, ErrorResponse）
+```
+
+**写入约定**：
+1. **per-resource 组织** — 同一 URL 路径前缀的所有操作（GET/POST/PUT/DELETE）放在同一个 `paths/{resource}.yaml` 文件中
+2. **跨模块共享类型** 放 `contracts/shared/schemas/`，模块内通过 `$ref: ../../shared/schemas/{Type}.yaml` 引用
+3. **兼容 `redocly bundle`** — 所有 `$ref` 使用相对路径，确保可被标准 OpenAPI 工具链处理
+4. **文件头标注来源** — 每个 YAML 文件顶部注释引用对应的需求 trace ID
 
 ## 流程
 

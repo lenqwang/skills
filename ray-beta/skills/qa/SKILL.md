@@ -45,6 +45,14 @@ description: OpenSpec 合约已存在，需要在实现代码编写前生成 TDD
 | `{TYPE}-{4hex}-{slug}.e2e.{ext}` | E2E 测试（如项目有 E2E 工具） |
 | `{TYPE}-{4hex}-{slug}.mock.{ext}` | API mock 处理器（如项目使用 mock 方案） |
 
+### 模式检查
+
+调用 `resolve_docs_root()` 获取 `(docs_root, mode)`。
+
+**docs 模式下**：允许（受限）。读 trace 生成 test-plan.md，不生成代码侧测试骨架
+**repo 模式下**：正常执行。
+**legacy 模式下**：正常执行。
+
 ## 流程
 
 1. **阅读** — 需求 + spec 文档（docs/specs/ 中的 .md）+ 组件文件 `modules/{module}/{ComponentName}.md`
