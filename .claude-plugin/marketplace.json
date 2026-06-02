@@ -1,6 +1,5 @@
 {
   "name": "skills",
-  "description": "Agent-driven development pipeline and UI generation skills for Claude Code",
   "owner": {
     "name": "lenqwang",
     "email": ""
