@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ray Multi-Project Hub · 团队培训蓝图</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --c-bg: #f8fafc;
+      --c-canvas: #ffffff;
+      --c-border: #cbd5e1;
+      --c-text-main: #0f172a;
+      --c-text-sub: #64748b;
+      --c-accent: #dc2626;
+      --font-ui: 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-ui);
+      background: var(--c-bg);
+      color: var(--c-text-main);
+      padding: 32px;
+      min-height: 100vh;
+    }
+
+    .diagram-container { max-width: 1200px; margin: 0 auto; }
+
+    .diagram-canvas {
+      background: var(--c-canvas);
+      border: 1px solid var(--c-border);
+      padding: 0;
+    }
+
+    /* ============ COVER ============ */
+    .cover {
+      padding: 56px 48px 40px;
+      border-bottom: 2px solid var(--c-text-main);
+    }
+
+    .cover-meta {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--c-text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 14px;
+    }
+
+    .cover-title {
+      font-size: 36px;
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 12px;
+      color: var(--c-text-main);
+    }
+
+    .cover-subtitle {
+      font-size: 14px;
+      color: var(--c-text-sub);
+      margin-bottom: 28px;
+    }
+
+    .punchline {
+      border: 2px solid var(--c-text-main);
+      padding: 18px 22px;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 18px;
+      align-items: center;
+      margin-bottom: 22px;
+    }
+
+    .punchline-tag {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--c-accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      white-space: nowrap;
+    }
+
+    .punchline-text {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--c-text-main);
+      line-height: 1.5;
+    }
+
+    .toc {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .toc-cell {
+      border: 1px solid var(--c-border);
+      padding: 14px 16px;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+      transition: border-color 0.12s, background 0.12s;
+      position: relative;
+    }
+
+    .toc-cell:hover {
+      border-color: var(--c-text-main);
+      background: var(--c-bg);
+    }
+
+    .toc-cell:hover .toc-num,
+    .toc-cell:hover .toc-title {
+      color: var(--c-text-main);
+    }
+
+    .toc-cell::after {
+      content: "↓";
+      position: absolute;
+      top: 12px;
+      right: 14px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--c-text-sub);
+      opacity: 0;
+      transition: opacity 0.12s;
+    }
+
+    .toc-cell:hover::after { opacity: 1; }
+
+    .chapter[id]::before {
+      content: "";
+      display: block;
+      height: 24px;
+      margin-top: -24px;
+      visibility: hidden;
+    }
+
+    .toc-num {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--c-text-sub);
+      letter-spacing: 0.06em;
+      margin-bottom: 6px;
+    }
+
+    .toc-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--c-text-main);
+      margin-bottom: 4px;
+      line-height: 1.3;
+    }
+
+    .toc-sub {
+      font-size: 11px;
+      color: var(--c-text-sub);
+      line-height: 1.45;
+    }
+
+    /* ============ CHAPTER ============ */
+    .chapter {
+      padding: 48px 48px 40px;
+      border-bottom: 1px solid var(--c-border);
+    }
+
+    .chapter:last-of-type { border-bottom: none; }
+
+    .chapter-banner {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 22px;
+      align-items: end;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--c-border);
+      margin-bottom: 26px;
+    }
+
+    .chapter-num {
+      font-family: var(--font-mono);
+      font-size: 56px;
+      font-weight: 700;
+      line-height: 1;
+      color: var(--c-text-main);
+    }
+
+    .chapter-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--c-text-main);
+      line-height: 1.2;
+      margin-bottom: 6px;
+    }
+
+    .chapter-question {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--c-text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .chapter-body { display: grid; gap: 20px; }
+
+    .lead-text {
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--c-text-main);
+    }
+
+    .lead-text .accent {
+      color: var(--c-text-main);
+      font-weight: 600;
+      border-bottom: 2px solid var(--c-text-main);
+    }
+
+    /* ============ TAKEAWAY ============ */
+    .takeaway {
+      border: 2px solid var(--c-text-main);
+      padding: 16px 20px;
+      margin-top: 28px;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 18px;
+      align-items: center;
+    }
+
+    .takeaway-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--c-accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      white-space: nowrap;
+    }
+
+    .takeaway-text {
+      font-size: 14px;
+      color: var(--c-text-main);
+      line-height: 1.55;
+      font-weight: 500;
+    }
+
+    .mono { font-family: var(--font-mono); }
+    .accent-color { color: var(--c-accent); }
+
+    /* ============ COMMON BUILDING BLOCKS ============ */
+    .panel {
+      border: 1px solid var(--c-border);
+      padding: 18px 20px;
+    }
+
+    .panel-label {
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      font-weight: 700;
+      color: var(--c-text-main);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--c-border);
+      margin-bottom: 14px;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .panel-label .panel-loc {
+      font-weight: 500;
+      color: var(--c-text-sub);
+      font-size: 9px;
+    }
+
+    /* ============ CHAPTER 01: TOPOLOGY ============ */
+    .ch01-svg-wrap {
+      border: 1px solid var(--c-border);
+      padding: 20px;
+      background: var(--c-bg);
+    }
+
+    .ch01-svg { width: 100%; height: auto; display: block; }
+
+    .ch01-svg text { font-family: var(--font-mono); fill: var(--c-text-main); }
+    .ch01-svg .lbl-sub { fill: var(--c-text-sub); }
+    .ch01-svg .stroke-main { stroke: var(--c-text-main); fill: none; }
+    .ch01-svg .stroke-soft { stroke: var(--c-border); fill: none; }
+    .ch01-svg .fill-canvas { fill: var(--c-canvas); }
+
+    .ch01-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    .ch01-cell {
+      border: 1px solid var(--c-border);
+      padding: 14px 16px;
+    }
+
+    .ch01-cell-q {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--c-text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 8px;
+    }
+
+    .ch01-cell-a {
+      font-size: 13px;
+      color: var(--c-text-main);
+      line-height: 1.55;
+    }
+
+    /* ============ CHAPTER 02: TRACE JOURNEY ============ */
+    .journey-step {
+      border: 1px solid var(--c-border);
+      display: grid;
+      grid-template-columns: 64px 1fr;
+      position: relative;
+    }
+
+    .journey-step + .journey-step { margin-top: 22px; }
+
+    .journey-step::before {
+      content: "";
+      position: absolute;
+      left: 31px;
+      top: -22px;
+      width: 2px;
+      height: 22px;
+      background: var(--c-text-main);
+    }
+
+    .journey-step:first-of-type::before { display: none; }
+
+    .journey-num {
+      background: var(--c-text-main);
+      color: var(--c-canvas);
+      font-family: var(--font-mono);
+      font-size: 16px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .journey-content {
+      padding: 14px 18px;
+    }
+
+    .journey-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 6px;
+      flex-wrap: wrap;
+    }
+
+    .journey-actor {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--c-text-main);
+    }
+
+    .journey-actor .actor-tag {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 2px 6px;
+      border: 1px solid var(--c-text-main);
+      color: var(--c-text-main);
+      margin-right: 8px;
+      vertical-align: middle;
+      text-transform: uppercase;
+    }
+
+    .journey-status {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--c-text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .journey-status .from { color: var(--c-text-sub); }
+    .journey-status .arrow { color: var(--c-text-sub); margin: 0 4px; }
+    .journey-status .to { color: var(--c-text-main); font-weight: 700; }
+
+    .journey-cmd {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      background: var(--c-bg);
+      border: 1px solid var(--c-border);
+      padding: 8px 10px;
+      margin: 8px 0;
+      color: var(--c-text-main);
+      overflow-x: auto;
+      white-space: pre;
+    }
+
+    .journey-effect {
+      font-size: 12px;
+      color: var(--c-text-sub);
+      line-height: 1.55;
+    }
+
+    .journey-effect ul {
+      list-style: none;
+      padding: 0;
+      margin-top: 4px;
+    }
+
+    .journey-effect li {
+      padding-left: 14px;
+      position: relative;
+      margin-top: 3px;
+    }
+
+    .journey-effect li::before {
+      content: "→";
+      position: absolute;
+      left: 0;
+      color: var(--c-text-sub);
+    }
+
+    /* ============ CHAPTER 02 EXTRAS: STATUS BAR + ROLE DAG ============ */
+    .lifecycle-bar {
+      display: grid;
+      grid-template-columns: 1fr 18px 1fr 18px 1fr 18px 1fr 18px 1fr 18px 1fr 18px 1fr;
+      gap: 0;
+      border: 1px solid var(--c-border);
+      background: var(--c-canvas);
+    }
+
+    .lc-pill {
+      padding: 10px 4px;
+      text-align: center;
+      background: var(--c-bg);
+    }
+
+    .lc-pill .lc-status {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--c-text-main);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .lc-pill .lc-trigger {
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      color: var(--c-text-sub);
+    }
+
+    .lc-arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .lc-arrow svg { width: 12px; height: 10px; }
+
+    .lc-legend {
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--c-text-sub);
+      line-height: 1.55;
+    }
+
+    .role-dag-block {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--c-text-main);
+      line-height: 1.7;
+      padding: 16px 18px;
+      background: var(--c-canvas);
+      border: 1px solid var(--c-border);
+      white-space: pre;
+      overflow-x: auto;
+    }
+
+    /* ============ CHAPTER 03: ROLES ============ */
+    .roles-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    .roles-table th, .roles-table td {
+      border: 1px solid var(--c-border);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .roles-table th {
+      background: var(--c-bg);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--c-text-main);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .roles-table td.role-name {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: var(--c-text-main);
+      white-space: nowrap;
+      width: 70px;
+    }
+
+    .roles-table .mono { font-size: 11px; }
+
+    .file-per-writer {
+      border: 1px solid var(--c-border);
+      padding: 18px 20px;
+      background: var(--c-bg);
+    }
+
+    .fpw-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--c-text-main);
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .fpw-sub {
+      font-size: 11.5px;
+      color: var(--c-text-sub);
+      margin-bottom: 14px;
+      line-height: 1.55;
+    }
+
+    .fpw-tree {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--c-text-sub);
+      line-height: 1.7;
+      white-space: pre;
+      padding: 14px 16px;
+      background: var(--c-canvas);
+      border: 1px solid var(--c-border);
+    }
+
+    .fpw-tree .writer {
+      color: var(--c-text-main);
+      font-weight: 600;
+    }
+
+    /* ============ CHAPTER 04: CHEAT SHEET ============ */
+    .ch04-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .matrix-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+    }
+
+    .matrix-table th, .matrix-table td {
+      border-bottom: 1px solid var(--c-border);
+      border-right: 1px solid var(--c-border);
+      padding: 6px 9px;
+      vertical-align: middle;
+    }
+
+    .matrix-table th:last-child, .matrix-table td:last-child { border-right: none; }
+    .matrix-table tr:last-child td { border-bottom: none; }
+
+    .matrix-table th {
+      background: var(--c-bg);
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      font-weight: 700;
+      color: var(--c-text-main);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      text-align: center;
+    }
+
+    .matrix-table th.skill-col { text-align: left; }
+
+    .matrix-table td.skill-name {
+      font-family: var(--font-mono);
+      font-weight: 600;
+      color: var(--c-text-main);
+      white-space: nowrap;
+    }
+
+    .matrix-table td.cell {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      text-align: center;
+      width: 60px;
+    }
+
+    .cell-allow { color: var(--c-text-main); }
+    .cell-deny { color: var(--c-accent); }
+    .cell-limit { color: var(--c-text-sub); }
+
+    .cheat-sheet {
+      display: grid;
+      gap: 8px;
+    }
+
+    .cheat-row {
+      border: 1px solid var(--c-border);
+      padding: 10px 14px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .cheat-q {
+      font-size: 12px;
+      color: var(--c-text-main);
+    }
+
+    .cheat-a {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--c-text-main);
+      font-weight: 600;
+      padding: 3px 8px;
+      border: 1px solid var(--c-text-main);
+    }
+
+    /* ============ FOOTER ============ */
+    .footer {
+      padding: 24px 48px;
+      border-top: 1px solid var(--c-border);
+      display: grid;
+      gap: 6px;
+      font-size: 11.5px;
+      color: var(--c-text-sub);
+      line-height: 1.6;
+    }
+
+    @media (max-width: 900px) {
+      .toc, .ch01-grid, .ch04-grid { grid-template-columns: 1fr; }
+      .punchline, .takeaway { grid-template-columns: 1fr; }
+      .chapter-banner { grid-template-columns: 1fr; }
+      .chapter-num { font-size: 36px; }
+      .cover, .chapter, .footer { padding: 28px 24px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="diagram-container">
+    <div class="diagram-canvas">
+
+      <!-- ============================================================
+           COVER
+      ============================================================ -->
+      <section class="cover">
+        <div class="cover-meta">TEAM TRAINING · 2026-04-17</div>
+        <h1 class="cover-title">Ray Multi-Project Hub</h1>
+
+        <div class="punchline">
+          <div class="punchline-tag">CORE IDEA</div>
+          <div class="punchline-text">
+            文档仓为大脑，代码仓为四肢。<strong>一个 trace = 一条 docs 分支</strong>，所有角色在文档仓汇聚。
+          </div>
+        </div>
+
+        <div class="toc">
+          <a class="toc-cell" href="#ch01">
+            <div class="toc-num">01</div>
+            <div class="toc-title">拓扑：大脑与四肢</div>
+            <div class="toc-sub">为什么 PD 不需要代码仓权限</div>
+          </a>
+          <a class="toc-cell" href="#ch02">
+            <div class="toc-num">02</div>
+            <div class="toc-title">一条 trace 的旅程</div>
+            <div class="toc-sub">用 FEAT-a3f7-login 走完整轮</div>
+          </a>
+          <a class="toc-cell" href="#ch03">
+            <div class="toc-num">03</div>
+            <div class="toc-title">谁在哪里做什么</div>
+            <div class="toc-sub">file-per-writer + 5 个角色</div>
+          </a>
+          <a class="toc-cell" href="#ch04">
+            <div class="toc-num">04</div>
+            <div class="toc-title">速查 · Cheat Sheet</div>
+            <div class="toc-sub">"我想 X，跑 Y" + skill 矩阵</div>
+          </a>
+        </div>
+      </section>
+
+      <!-- ============================================================
+           CHAPTER 01 · TOPOLOGY
+      ============================================================ -->
+      <section class="chapter" id="ch01">
+        <div class="chapter-banner">
+          <div class="chapter-num">01</div>
+          <div>
+            <div class="chapter-title">拓扑：大脑与四肢</div>
+            <div class="chapter-question">为什么 PD / UI / QA 完全不需要代码仓权限？</div>
+          </div>
+        </div>
+
+        <div class="chapter-body">
+          <p class="lead-text">
+            产品 <span class="mono">acme</span> 有 3 个代码仓：<span class="mono">acme-web</span>（前端）、<span class="mono">acme-srv-user</span>（用户服务）、<span class="mono">acme-srv-pay</span>（支付服务）。<span class="accent">所有产品文档、API 契约、需求追踪都集中在第 4 个 git 仓 <span class="mono">acme-product-docs</span></span>——这就是 hub。代码仓只是"接入"hub，并不存储文档。
+          </p>
+
+          <div class="ch01-svg-wrap">
+            <svg class="ch01-svg" viewBox="0 0 480 260" xmlns="http://www.w3.org/2000/svg">
+              <!-- Hub -->
+              <rect x="150" y="20" width="180" height="56" class="stroke-main fill-canvas" stroke-width="2"/>
+              <text x="240" y="44" font-size="13" font-weight="700" text-anchor="middle">acme-product-docs</text>
+              <text x="240" y="62" font-size="10" class="lbl-sub" text-anchor="middle">HUB · 独立 git 仓</text>
+
+              <!-- Trunk -->
+              <line x1="240" y1="76" x2="240" y2="130" class="stroke-main" stroke-width="1.5"/>
+              <line x1="70" y1="130" x2="410" y2="130" class="stroke-main" stroke-width="1.5"/>
+              <line x1="70" y1="130" x2="70" y2="170" class="stroke-main" stroke-width="1.5"/>
+              <line x1="240" y1="130" x2="240" y2="170" class="stroke-main" stroke-width="1.5"/>
+              <line x1="410" y1="130" x2="410" y2="170" class="stroke-main" stroke-width="1.5"/>
+
+              <!-- Spokes -->
+              <rect x="20" y="170" width="100" height="64" class="stroke-main fill-canvas" stroke-width="1"/>
+              <text x="70" y="190" font-size="11" font-weight="700" text-anchor="middle">acme-web</text>
+              <text x="70" y="205" font-size="9" class="lbl-sub" text-anchor="middle">FE · UI</text>
+              <text x="70" y="220" font-size="9" class="lbl-sub" text-anchor="middle">.ray/docs/</text>
+
+              <rect x="190" y="170" width="100" height="64" class="stroke-main fill-canvas" stroke-width="1"/>
+              <text x="240" y="190" font-size="11" font-weight="700" text-anchor="middle">acme-srv-user</text>
+              <text x="240" y="205" font-size="9" class="lbl-sub" text-anchor="middle">BE</text>
+              <text x="240" y="220" font-size="9" class="lbl-sub" text-anchor="middle">.ray/docs/</text>
+
+              <rect x="360" y="170" width="100" height="64" class="stroke-main fill-canvas" stroke-width="1"/>
+              <text x="410" y="190" font-size="11" font-weight="700" text-anchor="middle">acme-srv-pay</text>
+              <text x="410" y="205" font-size="9" class="lbl-sub" text-anchor="middle">BE</text>
+              <text x="410" y="220" font-size="9" class="lbl-sub" text-anchor="middle">.ray/docs/</text>
+
+              <!-- PD/UI/QA on hub side -->
+              <text x="345" y="38" font-size="9" class="lbl-sub">← PD / UI / QA</text>
+              <text x="345" y="50" font-size="9" class="lbl-sub">  在这里工作</text>
+
+              <!-- Note -->
+              <text x="240" y="251" font-size="10" class="lbl-sub" text-anchor="middle">每个代码仓自动 pull/push hub 的 ray/{trace_id} 分支</text>
+            </svg>
+          </div>
+
+          <div class="panel">
+            <div class="panel-label">
+              <span>HUB 内部结构</span>
+              <span class="panel-loc">acme-product-docs/ 里到底有什么</span>
+            </div>
+            <div class="fpw-tree">acme-product-docs/                   ← HUB · 独立 git 仓
+│
+├── product/                        ← 产品文档（HUMAN · canonical source of truth）
+│   ├── PRODUCT-MAP.md              ←   产品地图索引（模块总览 + 工作流 + 关系图）
+│   └── modules/{m}/                ←   按业务模块（auth / billing / ...）
+│       ├── index.md                ←     模块概述（用户旅程 + 组件索引）
+│       └── {Component}.md          ←     组件文件（轻量 / 标准 / 完整 三档模板）
+│
+├── tech/                           ← 技术视角（REFERENCE · 可选 · 有 TECH-MAP.md 才生效）
+│   ├── TECH-MAP.md                 ←   系统全景（架构风格 + 依赖 + 部署）
+│   ├── runtime/                    ←   运行时单元（web · h5 · native · services · database · cache · queue）
+│   ├── concerns/                   ←   跨运行时关注点（auth · observability · ci-cd · testing · security）
+│   └── decisions/                  ←   ADR（架构决策记录）
+│
+├── contracts/                      ← API 契约（CONTRACT · FE/BE 握手点）
+│   ├── {module}/                   ←   按模块组织（与 product/modules/ 一一对应）
+│   │   ├── openapi.yaml            ←     模块根文件（$ref 引用 paths/ 与 schemas/）
+│   │   ├── paths/{resource}.yaml   ←     按 URL 资源前缀分组（OpenAPI 官方推荐）
+│   │   └── schemas/{Schema}.yaml   ←     模块内 request / response schema
+│   └── shared/schemas/             ←   跨模块共享类型（Error · Pagination · User）
+│
+└── traces/                         ← 需求追踪（SOURCE · file-per-writer 工作区）
+    ├── {TRACE_ID}/                 ←   active · 一个文件夹 = 一个 trace 完整工作区
+    │   ├── trace.md                ←     PD：需求主文件（场景 + 验收 + 规则）
+    │   ├── challenge.md            ←     Challenge Agent：质疑清单（仅 FEAT/BUG）
+    │   ├── ui.md                   ←     UI：交互流程 + 视觉规范
+    │   ├── be.md                   ←     BE：API 设计 + 数据模型
+    │   ├── fe.md                   ←     FE：组件结构 + 状态管理
+    │   ├── test-plan.md            ←     QA：测试用例矩阵
+    │   ├── run.json                ←     pipeline 执行日志
+    │   └── state/                  ←     各 repo 状态切片（file-per-writer · 零冲突）
+    │       ├── {repo_id}.json      ←       每个代码仓写自己的（如 web.json / srv-user.json）
+    │       └── docs.json           ←       docs 模式下 PD/QA 的操作记录
+    │
+    ├── _archive/{TRACE_ID}/        ←   digested · 已被 /digest 吸收，仅供追溯
+    └── *.csv                       ←   gitignored · 派生索引（index/files/apis/tests/tech_debt）</div>
+          </div>
+
+          <div class="ch01-grid">
+            <div class="ch01-cell">
+              <div class="ch01-cell-q">产品文档在哪？</div>
+              <div class="ch01-cell-a">在 hub 仓 <span class="mono">acme-product-docs</span> 里。代码仓里<strong>没有</strong> <span class="mono">docs/product/</span> 也<strong>没有</strong> <span class="mono">docs/traces/</span>——全员通过这一个仓协作。</div>
+            </div>
+            <div class="ch01-cell">
+              <div class="ch01-cell-q">代码仓需要什么？</div>
+              <div class="ch01-cell-a">只需 1 个文件：<span class="mono">.ray/config.yaml</span>（入库共享，含 docs_url）。其他人 clone 后第一次跑 ray 命令时，hub 会自动 clone 到 <span class="mono">.ray/docs/</span>（gitignored）。零手动配置。</div>
+            </div>
+            <div class="ch01-cell">
+              <div class="ch01-cell-q">PD 怎么提需求？</div>
+              <div class="ch01-cell-a">直接 <span class="mono">cd acme-product-docs</span> 跑 <span class="mono">/propose</span>。不需要 clone 任何代码仓。看不到代码也没关系——后续开发会接入。</div>
+            </div>
+            <div class="ch01-cell">
+              <div class="ch01-cell-q">FE / BE 怎么协作？</div>
+              <div class="ch01-cell-a">通过 hub 里的 <span class="mono">contracts/{module}/paths/{resource}.yaml</span>（OpenAPI 契约）握手。BE 写契约，FE 读契约——两人不需要互相读对方代码。</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="takeaway">
+          <div class="takeaway-label">记住这点</div>
+          <div class="takeaway-text">
+            <strong>权限按角色隔离，但产品文档全员共享。</strong>PD/UI/QA 只要 hub 仓权限就能完整工作；FE/BE 各自只看自己代码仓 + hub。没有"我看不到你那边"的理由。
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================
+           CHAPTER 02 · TRACE JOURNEY
+      ============================================================ -->
+      <section class="chapter" id="ch02">
+        <div class="chapter-banner">
+          <div class="chapter-num">02</div>
+          <div>
+            <div class="chapter-title">一条 trace 的旅程</div>
+            <div class="chapter-question">用 FEAT-a3f7-login 跟到底 · 涉及 acme-web + acme-srv-user 两个仓</div>
+          </div>
+        </div>
+
+        <div class="chapter-body">
+          <p class="lead-text">
+            场景：PD 需要"用户登录"功能（邮箱 + 密码 + 可选 2FA）。前端要做登录页，后端要新增 <span class="mono">POST /auth/session</span> 接口。看完这一章你就懂从想法到 PR 合并的完整 8 步。
+          </p>
+
+          <div class="panel">
+            <div class="panel-label">
+              <span>状态机概览</span>
+              <span class="panel-loc">trace 的 status 字段 · 只能向右推进</span>
+            </div>
+            <div class="lifecycle-bar">
+              <div class="lc-pill"><div class="lc-status">proposed</div><div class="lc-trigger">/propose</div></div>
+              <div class="lc-arrow"><svg viewBox="0 0 12 10" fill="none"><line x1="0" y1="5" x2="9" y2="5" stroke="#cbd5e1" stroke-width="1"/><polyline points="6,1 10,5 6,9" stroke="#cbd5e1" stroke-width="1" fill="none"/></svg></div>
+              <div class="lc-pill"><div class="lc-status">traced</div><div class="lc-trigger">/trace</div></div>
+              <div class="lc-arrow"><svg viewBox="0 0 12 10" fill="none"><line x1="0" y1="5" x2="9" y2="5" stroke="#cbd5e1" stroke-width="1"/><polyline points="6,1 10,5 6,9" stroke="#cbd5e1" stroke-width="1" fill="none"/></svg></div>
+              <div class="lc-pill"><div class="lc-status">coding</div><div class="lc-trigger">/pipeline</div></div>
+              <div class="lc-arrow"><svg viewBox="0 0 12 10" fill="none"><line x1="0" y1="5" x2="9" y2="5" stroke="#cbd5e1" stroke-width="1"/><polyline points="6,1 10,5 6,9" stroke="#cbd5e1" stroke-width="1" fill="none"/></svg></div>
+              <div class="lc-pill"><div class="lc-status">qa</div><div class="lc-trigger">/pipeline</div></div>
+              <div class="lc-arrow"><svg viewBox="0 0 12 10" fill="none"><line x1="0" y1="5" x2="9" y2="5" stroke="#cbd5e1" stroke-width="1"/><polyline points="6,1 10,5 6,9" stroke="#cbd5e1" stroke-width="1" fill="none"/></svg></div>
+              <div class="lc-pill"><div class="lc-status">audited</div><div class="lc-trigger">/pipeline</div></div>
+              <div class="lc-arrow"><svg viewBox="0 0 12 10" fill="none"><line x1="0" y1="5" x2="9" y2="5" stroke="#cbd5e1" stroke-width="1"/><polyline points="6,1 10,5 6,9" stroke="#cbd5e1" stroke-width="1" fill="none"/></svg></div>
+              <div class="lc-pill"><div class="lc-status">shipped</div><div class="lc-trigger">/ship</div></div>
+              <div class="lc-arrow"><svg viewBox="0 0 12 10" fill="none"><line x1="0" y1="5" x2="9" y2="5" stroke="#cbd5e1" stroke-width="1"/><polyline points="6,1 10,5 6,9" stroke="#cbd5e1" stroke-width="1" fill="none"/></svg></div>
+              <div class="lc-pill"><div class="lc-status">digested</div><div class="lc-trigger">/ship --finalize</div></div>
+            </div>
+            <div class="lc-legend">
+              上行 = <span class="mono">index.csv</span> 里 status 字段实际写的值；下行 = 把它推进到该值的 skill。<span class="mono">coding · qa · audited</span> 三段都由 <span class="mono">/pipeline</span> 自动调度（内部串联 architect → qa → coder → audit → update-map），无需用户单独跑。<span class="mono">/audit</span> 拒绝跳格，回退需 <span class="mono">--force</span>。
+            </div>
+          </div>
+
+          <div class="journey-step">
+            <div class="journey-num">1</div>
+            <div class="journey-content">
+              <div class="journey-head">
+                <div class="journey-actor"><span class="actor-tag">PD</span>立项</div>
+                <div class="journey-status"><span class="from">—</span><span class="arrow">→</span><span class="to">proposed</span></div>
+              </div>
+              <div class="journey-cmd">cd acme-product-docs
+/propose 用户登录（邮箱 + 密码 + 可选 2FA）</div>
+              <div class="journey-effect">
+                <ul>
+                  <li>创建 docs 分支 <span class="mono">ray/feat-a3f7</span> 并 push（<strong>唯一的分支创建动作</strong>）</li>
+                  <li>写 <span class="mono">traces/FEAT-a3f7-login/trace.md</span>（场景 + 验收标准 + roles: pd ui be fe qc）</li>
+                  <li><span class="mono">index.csv</span> 追加一行：<span class="mono">FEAT-a3f7,login,proposed,...</span></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="journey-step">
+            <div class="journey-num">2</div>
+            <div class="journey-content">
+              <div class="journey-head">
+                <div class="journey-actor"><span class="actor-tag">FE</span>接需求</div>
+                <div class="journey-status"><span class="from">proposed</span><span class="arrow">→</span><span class="to">traced</span></div>
+              </div>
+              <div class="journey-cmd">cd acme-web
+git checkout -b feat/login-FEAT-a3f7
+/trace</div>
+              <div class="journey-effect">
+                <ul>
+                  <li>从代码分支名自动识别 TRACE_ID = FEAT-a3f7</li>
+                  <li>checkout hub 的 <span class="mono">ray/feat-a3f7</span> 到 <span class="mono">.ray/docs/</span>（自动）</li>
+                  <li>扫描 web 代码做影响分析，向 <span class="mono">trace.md</span> 追加 FE 技术方案</li>
+                  <li><span class="mono">index.csv</span> 的 repos 列追加 <span class="mono">web</span></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="journey-step">
+            <div class="journey-num">3</div>
+            <div class="journey-content">
+              <div class="journey-head">
+                <div class="journey-actor"><span class="actor-tag">BE</span>接需求 · 写契约</div>
+                <div class="journey-status">traced（不变 · BE 加入 repos 列）</div>
+              </div>
+              <div class="journey-cmd">cd acme-srv-user
+git checkout -b feat/auth-api-FEAT-a3f7
+/trace</div>
+              <div class="journey-effect">
+                <ul>
+                  <li>自动 checkout 到 <span class="mono">ray/feat-a3f7</span>（PD 在 step 1 已创建，远程已存在则直接复用）</li>
+                  <li>写 <span class="mono">be.md</span>（API 设计 + 数据模型）</li>
+                  <li>写契约：<span class="mono">contracts/auth/paths/session.yaml</span>（POST /auth/session）</li>
+                  <li><span class="mono">index.csv</span> repos 列追加 <span class="mono">srv-user</span> · 现在是 <span class="mono">[web, srv-user]</span></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="journey-step">
+            <div class="journey-num">4</div>
+            <div class="journey-content">
+              <div class="journey-head">
+                <div class="journey-actor"><span class="actor-tag">FE</span>实现</div>
+                <div class="journey-status"><span class="from">traced</span><span class="arrow">→</span><span class="to">audited</span></div>
+              </div>
+              <div class="journey-cmd">cd acme-web
+/pipeline</div>
+              <div class="journey-effect">
+                <ul>
+                  <li>调度 architect → qa → coder → audit → update-map（per-repo 增量）</li>
+                  <li>写 web 的 <span class="mono">state/web.json</span>（包含 status、artifacts、contract_ids）</li>
+                  <li>FE 实现登录组件 + 调用 BE 契约 <span class="mono">contracts/auth/paths/session.yaml</span></li>
+                  <li>测试通过 + audit 评分通过 → web 视角的 status = audited</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="journey-step">
+            <div class="journey-num">5</div>
+            <div class="journey-content">
+              <div class="journey-head">
+                <div class="journey-actor"><span class="actor-tag">BE</span>实现</div>
+                <div class="journey-status"><span class="from">traced</span><span class="arrow">→</span><span class="to">audited</span></div>
+              </div>
+              <div class="journey-cmd">cd acme-srv-user
+/pipeline</div>
+              <div class="journey-effect">
+                <ul>
+                  <li>同 4，但写自己的 <span class="mono">state/srv-user.json</span>——<strong>file-per-writer，永不冲突</strong></li>
+                  <li>BE 实现 <span class="mono">POST /auth/session</span> + 单元测试</li>
+                  <li>srv-user 视角的 status = audited</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="journey-step">
+            <div class="journey-num">6</div>
+            <div class="journey-content">
+              <div class="journey-head">
+                <div class="journey-actor"><span class="actor-tag">FE</span>+<span class="actor-tag">BE</span>各自创建 PR</div>
+                <div class="journey-status"><span class="from">audited</span><span class="arrow">→</span><span class="to">per-repo shipped</span></div>
+              </div>
+              <div class="journey-cmd">/ship   # 在 acme-web
+/ship   # 在 acme-srv-user</div>
+              <div class="journey-effect">
+                <ul>
+                  <li>各代码仓创建自己的 PR（不是 hub PR）</li>
+                  <li>每次 ship 在 hub 的 <span class="mono">index.csv</span> 追加 <span class="mono">repo_status</span>：<span class="mono">web:shipped, srv-user:shipped</span></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="journey-step">
+            <div class="journey-num">7</div>
+            <div class="journey-content">
+              <div class="journey-head">
+                <div class="journey-actor"><span class="actor-tag">FE/BE</span>code PR 合并</div>
+                <div class="journey-status">shipped（等待 finalize）</div>
+              </div>
+              <div class="journey-effect">
+                <ul>
+                  <li>web 的代码 PR 合入 main、srv-user 的代码 PR 合入 main——常规 review 流程，ray 不参与</li>
+                  <li>但是！hub 的 <span class="mono">ray/feat-a3f7</span> 分支还<strong>没有</strong>合入 hub main</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="journey-step">
+            <div class="journey-num">8</div>
+            <div class="journey-content">
+              <div class="journey-head">
+                <div class="journey-actor"><span class="actor-tag">最后合 PR 的人</span>收尾</div>
+                <div class="journey-status"><span class="from">shipped</span><span class="arrow">→</span><span class="to">digested</span></div>
+              </div>
+              <div class="journey-cmd">/ship --finalize FEAT-a3f7</div>
+              <div class="journey-effect">
+                <ul>
+                  <li>squash-merge hub 的 <span class="mono">ray/feat-a3f7</span> → hub main</li>
+                  <li>跑 <span class="mono">/update-map</span>（终态收口模式）：所有 state json 齐全后跨 repo 重算 PRODUCT-MAP</li>
+                  <li>跑 <span class="mono">/digest</span>：把 trace 内容归纳进 <span class="mono">product/modules/auth/</span></li>
+                  <li>移动 <span class="mono">traces/FEAT-a3f7-login/</span> → <span class="mono">traces/_archive/FEAT-a3f7-login/</span></li>
+                  <li>删除远程 <span class="mono">ray/feat-a3f7</span> 分支 · 任务彻底闭环</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-label">
+              <span>多角色协作 DAG (FEAT / BUG)</span>
+              <span class="panel-loc">Step 2-5 内部展开 · PATCH / REFACTOR 跳过 Challenge</span>
+            </div>
+            <div class="role-dag-block">PD ─► Challenge(PD) ─► PD修复 ─┐
+                                │
+                                ├─► UI ────────────────┐
+                                │                       │
+                                └─► BE ─► Chall(BE) ───┤
+                                     │                  │
+                                     └─► contracts/ ◄──┤
+                                                        │
+                                     FE ─► Chall(FE) ◄─┘
+                                          │
+                                          └─► QC</div>
+            <div class="lc-legend">
+              Challenge Agent 在 PD/BE/FE 产出后自动介入做"魔鬼代言人"质疑（最多 3 轮自愈循环）。FE 等 UI + BE 都通过才动工，QC 等所有产出齐全才动工。pipeline 按 trace.md 头部 <span class="mono">roles</span> 字段裁剪 DAG。
+            </div>
+          </div>
+        </div>
+
+        <div class="takeaway">
+          <div class="takeaway-label">记住这点</div>
+          <div class="takeaway-text">
+            <span class="mono">/propose</span> 是<strong>唯一</strong>的分支创建者。后续 <span class="mono">/trace · /pipeline · /audit · /ship</span> 全部自动 checkout 同一条 <span class="mono">ray/{trace_id}</span> 分支，多代码仓写入也只走这一条——<strong>这就是"一个 trace = 一条分支"</strong>。
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================
+           CHAPTER 03 · ROLES
+      ============================================================ -->
+      <section class="chapter" id="ch03">
+        <div class="chapter-banner">
+          <div class="chapter-num">03</div>
+          <div>
+            <div class="chapter-title">谁在哪里做什么</div>
+            <div class="chapter-question">5 个角色 · 各自的工作目录 · file-per-writer 怎么消灭冲突</div>
+          </div>
+        </div>
+
+        <div class="chapter-body">
+          <table class="roles-table">
+            <thead>
+              <tr>
+                <th>角色</th>
+                <th>工作目录</th>
+                <th>主用 skill</th>
+                <th>在 FEAT-a3f7-login 中产出</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="role-name">PD</td>
+                <td><span class="mono">acme-product-docs/</span></td>
+                <td><span class="mono">/propose · /digest · /explore</span></td>
+                <td><span class="mono">trace.md</span></td>
+              </tr>
+              <tr>
+                <td class="role-name">UI</td>
+                <td><span class="mono">acme-product-docs/</span></td>
+                <td><span class="mono">/propose · /explore</span></td>
+                <td><span class="mono">ui.md</span>（交互流程 · 视觉规范）</td>
+              </tr>
+              <tr>
+                <td class="role-name">BE</td>
+                <td><span class="mono">acme-srv-user/</span> + <span class="mono">.ray/docs/</span> 自动同步</td>
+                <td><span class="mono">/trace · /pipeline · /audit · /ship</span></td>
+                <td><span class="mono">be.md</span> + <span class="mono">contracts/auth/paths/session.yaml</span> + <span class="mono">state/srv-user.json</span></td>
+              </tr>
+              <tr>
+                <td class="role-name">FE</td>
+                <td><span class="mono">acme-web/</span> + <span class="mono">.ray/docs/</span> 自动同步</td>
+                <td><span class="mono">/trace · /pipeline · /audit · /ship</span></td>
+                <td><span class="mono">fe.md</span> + <span class="mono">state/web.json</span></td>
+              </tr>
+              <tr>
+                <td class="role-name">QA</td>
+                <td><span class="mono">acme-product-docs/</span> + 可选只读各代码仓</td>
+                <td><span class="mono">/qa · /explore · /audit</span></td>
+                <td><span class="mono">test-plan.md</span> + <span class="mono">state/docs.json</span></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="file-per-writer">
+            <div class="fpw-title">file-per-writer · 为什么 git 永远不会冲突</div>
+            <div class="fpw-sub">
+              在 trace 文件夹里，每个角色 / 每个代码仓只写自己专属的文件。两个 writer 不会改同一个文件——git merge 没有可冲突的位置。这是工程上的硬保证，不靠"协调"。
+            </div>
+            <div class="fpw-tree">traces/FEAT-a3f7-login/
+├── trace.md                ← <span class="writer">PD</span> 写
+├── ui.md                   ← <span class="writer">UI</span> 写
+├── be.md                   ← <span class="writer">BE</span> 写
+├── fe.md                   ← <span class="writer">FE</span> 写
+├── test-plan.md            ← <span class="writer">QA</span> 写
+└── state/
+    ├── web.json            ← <span class="writer">acme-web</span> 写（FE pipeline 触发）
+    ├── srv-user.json       ← <span class="writer">acme-srv-user</span> 写（BE pipeline 触发）
+    └── docs.json           ← <span class="writer">PD/QA</span> 写（docs 模式操作）</div>
+          </div>
+        </div>
+
+        <div class="takeaway">
+          <div class="takeaway-label">记住这点</div>
+          <div class="takeaway-text">
+            5 个角色 → 5+ 类专属文件 → git 冲突在<strong>设计上</strong>不可能。即使 FE 和 BE 同时跑 <span class="mono">/pipeline</span>，他们写的是不同 json，rebase 必然成功。
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================
+           CHAPTER 04 · CHEAT SHEET
+      ============================================================ -->
+      <section class="chapter" id="ch04">
+        <div class="chapter-banner">
+          <div class="chapter-num">04</div>
+          <div>
+            <div class="chapter-title">速查 · Cheat Sheet</div>
+            <div class="chapter-question">不知道跑哪个？看这页</div>
+          </div>
+        </div>
+
+        <div class="chapter-body">
+          <div class="ch04-grid">
+
+            <div class="panel">
+              <div class="panel-label">
+                <span>"我想 X，跑 Y"</span>
+                <span class="panel-loc">日常场景</span>
+              </div>
+              <div class="cheat-sheet">
+                <div class="cheat-row"><div class="cheat-q">提一个产品需求</div><div class="cheat-a">/propose</div></div>
+                <div class="cheat-row"><div class="cheat-q">接需求开始做（FE/BE）</div><div class="cheat-a">/trace</div></div>
+                <div class="cheat-row"><div class="cheat-q">完整跑实现 → 审计 <strong>（默认）</strong></div><div class="cheat-a">/pipeline</div></div>
+                <div class="cheat-row"><div class="cheat-q">只单独跑测试 <em>（高级 · 一般用 /pipeline）</em></div><div class="cheat-a">/qa</div></div>
+                <div class="cheat-row"><div class="cheat-q">只单独跑实现循环 <em>（高级 · 一般用 /pipeline）</em></div><div class="cheat-a">/coder</div></div>
+                <div class="cheat-row"><div class="cheat-q">提交代码 PR</div><div class="cheat-a">/ship</div></div>
+                <div class="cheat-row"><div class="cheat-q">所有代码 PR 都合了</div><div class="cheat-a">/ship --finalize</div></div>
+                <div class="cheat-row"><div class="cheat-q">看产品当前进度</div><div class="cheat-a">/explore</div></div>
+                <div class="cheat-row"><div class="cheat-q">整理碎片 trace 进产品文档</div><div class="cheat-a">/digest</div></div>
+                <div class="cheat-row"><div class="cheat-q">代码已写完但没 trace</div><div class="cheat-a">/post-trace</div></div>
+                <div class="cheat-row"><div class="cheat-q">第一次接入代码仓到 hub</div><div class="cheat-a">/origin --connect</div></div>
+                <div class="cheat-row"><div class="cheat-q">从 0 创建 hub 仓</div><div class="cheat-a">/origin --docs</div></div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-label">
+                <span>Skill × Mode</span>
+                <span class="panel-loc">repo / docs / legacy</span>
+              </div>
+              <table class="matrix-table">
+                <thead>
+                  <tr>
+                    <th class="skill-col">Skill</th>
+                    <th>repo</th>
+                    <th>docs</th>
+                    <th>legacy</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td class="skill-name">/propose</td><td class="cell cell-allow">✓</td><td class="cell cell-allow">✓</td><td class="cell cell-allow">✓</td></tr>
+                  <tr><td class="skill-name">/trace</td><td class="cell cell-allow">✓</td><td class="cell cell-deny">✗</td><td class="cell cell-allow">✓</td></tr>
+                  <tr><td class="skill-name">/architect</td><td class="cell cell-allow">✓</td><td class="cell cell-limit">◐</td><td class="cell cell-allow">✓</td></tr>
+                  <tr><td class="skill-name">/qa</td><td class="cell cell-allow">✓</td><td class="cell cell-allow">✓</td><td class="cell cell-allow">✓</td></tr>
+                  <tr><td class="skill-name">/coder</td><td class="cell cell-allow">✓</td><td class="cell cell-deny">✗</td><td class="cell cell-allow">✓</td></tr>
+                  <tr><td class="skill-name">/audit</td><td class="cell cell-allow">✓</td><td class="cell cell-limit">◐</td><td class="cell cell-allow">✓</td></tr>
+                  <tr><td class="skill-name">/ship</td><td class="cell cell-allow">✓</td><td class="cell cell-limit">◐</td><td class="cell cell-allow">✓</td></tr>
+                  <tr><td class="skill-name">/pipeline</td><td class="cell cell-allow">✓</td><td class="cell cell-deny">✗</td><td class="cell cell-allow">✓</td></tr>
+                  <tr><td class="skill-name">/digest</td><td class="cell cell-allow">✓</td><td class="cell cell-allow">✓</td><td class="cell cell-allow">✓</td></tr>
+                  <tr><td class="skill-name">/explore</td><td class="cell cell-allow">✓</td><td class="cell cell-limit">◐</td><td class="cell cell-allow">✓</td></tr>
+                  <tr><td class="skill-name">/origin</td><td class="cell cell-allow">✓</td><td class="cell cell-allow">✓</td><td class="cell cell-allow">✓</td></tr>
+                  <tr><td class="skill-name">/migrate</td><td class="cell cell-allow">✓</td><td class="cell cell-allow">✓</td><td class="cell cell-allow">✓</td></tr>
+                  <tr><td class="skill-name">/update-map</td><td class="cell cell-allow">✓<div style="font-size: 8.5px; color: var(--c-text-sub); margin-top: 1px;">Phase 6 增量</div></td><td class="cell cell-allow">✓<div style="font-size: 8.5px; color: var(--c-text-sub); margin-top: 1px;">finalize 收口</div></td><td class="cell cell-allow">✓</td></tr>
+                  <tr><td class="skill-name">/learn · /guard</td><td class="cell cell-allow">✓</td><td class="cell cell-allow">✓</td><td class="cell cell-allow">✓</td></tr>
+                </tbody>
+              </table>
+              <div style="margin-top: 10px; font-size: 11px; color: var(--c-text-sub); line-height: 1.6;">
+                <span class="mono cell-allow">✓</span> 可用 ·
+                <span class="mono cell-limit">◐</span> 受限（如仅 contracts/、仅 finalize 等）·
+                <span class="mono cell-deny">✗</span> 拒绝（需要代码上下文）
+                <br>
+                未列入主表：<span class="mono">/_trace-persist</span>（内部 skill，三模式皆可）·
+                <span class="mono">/post-trace</span>（辅助工具，补齐已写代码的事后流程）
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="takeaway">
+          <div class="takeaway-label">记住这点</div>
+          <div class="takeaway-text">
+            <strong>第一次不会全记住，没关系。</strong>把这页 bookmark 起来，需要时查。前 3 章理解了，速查表自然就懂。<span class="mono">/help</span> 也能查 skill 列表。
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================
+           FOOTER
+      ============================================================ -->
+      <div class="footer">
+        <div>培训蓝图基于 spec：<span class="mono">docs/superpowers/specs/2026-04-08-ray-multi-project-hub-design.md</span></div>
+        <div>看完后下一步：① 自己创建一个练习 trace 走一遍 8 步 / ② 看 spec 文档了解未在本页展开的细节（Challenge Agent · 灾难恢复 · 两段 update-map）</div>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>

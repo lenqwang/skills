@@ -1,0 +1,21 @@
+{
+  "name": "ray",
+  "description": "",
+  "version": "3.1.0",
+  "author": {
+    "name": "EK"
+  },
+  "keywords": [
+    "ray",
+    "pipeline",
+    "living-documentation",
+    "tdd",
+    "agent"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "ray",
+    "shortDescription": "",
+    "category": "productivity"
+  }
+}

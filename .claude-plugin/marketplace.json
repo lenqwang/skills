@@ -10,8 +10,8 @@
       "name": "ray",
       "description": "Agent-driven development pipeline with living documentation system — propose, trace, pipeline, architect, qa, coder, audit, ship",
       "category": "development",
-      "source": "./ray",
-      "homepage": "https://github.com/lenqwang/skills/tree/main/ray"
+      "source": "./ray-3.1.0",
+      "homepage": "https://github.com/lenqwang/skills/tree/main/ray-3.1.0"
     },
     {
       "name": "ray-beta",
